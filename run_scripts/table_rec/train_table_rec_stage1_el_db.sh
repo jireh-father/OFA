@@ -16,7 +16,7 @@ data=${data_dir}/ofa_dataset_train.tsv,${data_dir}/ofa_dataset_val.tsv
 restore_file=../../checkpoints/ofa_large.pt
 selected_cols=0,1,2
 
-task=caption
+task=table_rec
 arch=ofa_large
 criterion=adjust_label_smoothed_encouraging_loss # for el
 label_smoothing=0.1

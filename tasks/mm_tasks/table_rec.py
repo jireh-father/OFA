@@ -60,7 +60,7 @@ class TableRecConfig(OFAConfig):
     )
 
 
-@register_task("caption", dataclass=TableRecConfig)
+@register_task("table_rec", dataclass=TableRecConfig)
 class TableRecTask(OFATask):
     def __init__(self, cfg: TableRecConfig, src_dict, tgt_dict):
         super().__init__(cfg, src_dict, tgt_dict)
