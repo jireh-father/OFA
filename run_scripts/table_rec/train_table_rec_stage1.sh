@@ -34,7 +34,6 @@ max_src_length=80
 max_tgt_length=1000
 num_bins=1000
 patch_image_size=480
-eval_cider_cached=${data_dir}/cider_cached_tokens/coco-valid-words.p
 drop_worst_ratio=0.2
 
 for max_epoch in {2,}; do
@@ -82,10 +81,8 @@ for max_epoch in {2,}; do
           --no-epoch-checkpoints --keep-best-checkpoints=1 \
           --save-interval=1 --validate-interval=1 \
           --save-interval-updates=500 --validate-interval-updates=500 \
-          --eval-cider \
-          --eval-cider-cached-tokens=${eval_cider_cached} \
           --eval-args='{"beam":5,"max_len_b":16,"no_repeat_ngram_size":3}' \
-          --best-checkpoint-metric=cider --maximize-best-checkpoint-metric \
+          --best-checkpoint-metric=teds --maximize-best-checkpoint-metric \
           --max-src-length=${max_src_length} \
           --max-tgt-length=${max_tgt_length} \
           --find-unused-parameters \

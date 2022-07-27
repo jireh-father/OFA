@@ -20,7 +20,6 @@ from fairseq.tasks import register_task
 from tasks.ofa_task import OFATask, OFAConfig
 from data.mm_data.table_rec_dataset import TableRecDataset
 from data.file_dataset import FileDataset
-from utils.cider.pyciderevalcap.ciderD.ciderD import CiderD
 from utils.teds import TEDS, preprocess_tag_str, decode_to_html
 
 EVAL_BLEU_ORDER = 4
@@ -30,11 +29,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class TableRecConfig(OFAConfig):
-    eval_bleu: bool = field(
-        default=False, metadata={"help": "evaluation with BLEU scores"}
-    )
-    eval_cider: bool = field(
-        default=False, metadata={"help": "evaluation with CIDEr scores"}
+    eval: bool = field(
+        default=True, metadata={"help": "evaluation"}
     )
     eval_args: Optional[str] = field(
         default='{}',
@@ -44,20 +40,6 @@ class TableRecConfig(OFAConfig):
     )
     eval_print_samples: bool = field(
         default=False, metadata={"help": "print sample generations during validation"}
-    )
-    eval_cider_cached_tokens: Optional[str] = field(
-        default=None,
-        metadata={"help": "path to cached cPickle file used to calculate CIDEr scores"},
-    )
-
-    scst: bool = field(
-        default=False, metadata={"help": "Self-critical sequence training"}
-    )
-    scst_args: str = field(
-        default='{}',
-        metadata={
-            "help": 'generation args for Self-critical sequence training, as JSON string'
-        },
     )
 
 
@@ -91,52 +73,19 @@ class TableRecTask(OFATask):
 
     def build_model(self, cfg):
         model = super().build_model(cfg)
-        if self.cfg.eval_bleu or self.cfg.eval_cider:
+        if self.cfg.eval:
             gen_args = json.loads(self.cfg.eval_args)
             self.sequence_generator = self.build_generator(
                 [model], Namespace(**gen_args)
             )
-            if self.cfg.eval_cider:
-                self.CiderD_scorer = CiderD(df=self.cfg.eval_cider_cached_tokens)
-        if self.cfg.scst:
-            scst_args = json.loads(self.cfg.scst_args)
-            self.scst_generator = self.build_generator(
-                [model], Namespace(**scst_args)
-            )
 
         return model
-
-    def _calculate_cider_scores(self, gen_res, gt_res):
-        '''
-        gen_res: generated captions, list of str
-        gt_idx: list of int, of the same length as gen_res
-        gt_res: ground truth captions, list of list of str.
-            gen_res[i] corresponds to gt_res[gt_idx[i]]
-            Each image can have multiple ground truth captions
-        '''
-        gen_res_size = len(gen_res)
-
-        res = OrderedDict()
-        for i in range(gen_res_size):
-            res[i] = [gen_res[i].strip()]
-
-        gts = OrderedDict()
-        gt_res_ = [
-            [gt_res[i][j].strip() for j in range(len(gt_res[i]))]
-            for i in range(len(gt_res))
-        ]
-        for i in range(gen_res_size):
-            gts[i] = gt_res_[i]
-
-        res_ = [{'image_id': i, 'caption': res[i]} for i in range(len(res))]
-        _, scores = self.CiderD_scorer.compute_score(gts, res_)
-        return scores
 
     def valid_step(self, sample, model, criterion):
         loss, sample_size, logging_output = criterion(model, sample)
 
         model.eval()
-        if self.cfg.eval_bleu or self.cfg.eval_cider:
+        if self.cfg.eval:
             hyps, refs = self._inference(self.sequence_generator, sample, model)
             score = self.teds.batch(hyps, refs)
             logging_output["_teds"] = score
@@ -146,56 +95,13 @@ class TableRecTask(OFATask):
     def reduce_metrics(self, logging_outputs, criterion):
         super().reduce_metrics(logging_outputs, criterion)
 
-        def sum_logs(key):
-            import torch
-            result = sum(log.get(key, 0) for log in logging_outputs)
-            if torch.is_tensor(result):
-                result = result.cpu()
-            return result
+        if self.cfg.eval:
+            def compute_teds(meters):
+                teds = meters["_teds"].sum
+                teds = teds if isinstance(teds, float) else teds.item()
+                return round(teds, 3)
 
-        if self.cfg.eval_bleu:
-            counts, totals = [], []
-            for i in range(EVAL_BLEU_ORDER):
-                counts.append(sum_logs("_bleu_counts_" + str(i)))
-                totals.append(sum_logs("_bleu_totals_" + str(i)))
-
-            if max(totals) > 0:
-                # log counts as numpy arrays -- log_scalar will sum them correctly
-                metrics.log_scalar("_bleu_counts", np.array(counts))
-                metrics.log_scalar("_bleu_totals", np.array(totals))
-                metrics.log_scalar("_bleu_sys_len", sum_logs("_bleu_sys_len"))
-                metrics.log_scalar("_bleu_ref_len", sum_logs("_bleu_ref_len"))
-
-                def compute_bleu(meters):
-                    import inspect
-                    import sacrebleu
-
-                    fn_sig = inspect.getfullargspec(sacrebleu.compute_bleu)[0]
-                    if "smooth_method" in fn_sig:
-                        smooth = {"smooth_method": "exp"}
-                    else:
-                        smooth = {"smooth": "exp"}
-                    bleu = sacrebleu.compute_bleu(
-                        correct=meters["_bleu_counts"].sum,
-                        total=meters["_bleu_totals"].sum,
-                        sys_len=meters["_bleu_sys_len"].sum,
-                        ref_len=meters["_bleu_ref_len"].sum,
-                        **smooth
-                    )
-                    return round(bleu.score, 2)
-
-                metrics.log_derived("bleu", compute_bleu)
-
-        if self.cfg.eval_cider:
-            def compute_cider(meters):
-                cider = meters["_cider_score_sum"].sum / meters["_cider_cnt"].sum
-                cider = cider if isinstance(cider, float) else cider.item()
-                return round(cider, 3)
-
-            if sum_logs("_cider_cnt") > 0:
-                metrics.log_scalar("_cider_score_sum", sum_logs("_cider_score_sum"))
-                metrics.log_scalar("_cider_cnt", sum_logs("_cider_cnt"))
-                metrics.log_derived("cider", compute_cider)
+            metrics.log_derived("teds", compute_teds)
 
     def _inference(self, generator, sample, model):
 
