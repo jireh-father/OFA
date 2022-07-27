@@ -19,6 +19,8 @@ from PIL import Image, ImageFile
 from data import data_utils
 from data.ofa_dataset import OFADataset
 
+from utils.teds import preprocess_tag_str
+
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 ImageFile.MAX_IMAGE_PIXELS = None
 Image.MAX_IMAGE_PIXELS = None
@@ -89,18 +91,11 @@ class TableRecDataset(OFADataset):
         max_tgt_length=1000,
         patch_image_size=224,
         imagenet_default_mean_and_std=False,
-        scst=False
     ):
         super().__init__(split, dataset, bpe, src_dict, tgt_dict)
         self.max_src_length = max_src_length
         self.max_tgt_length = max_tgt_length
         self.patch_image_size = patch_image_size
-        self.scst = scst
-
-
-        self.transtab = str.maketrans({key: None for key in r"""!#$%&'()*+,-.:;?@[\]^_`{|}~"""})
-        self.transtab_post = str.maketrans({key: None for key in r"""<>"=/"""})
-        self.tag_special_re = re.compile(r'[<>"=/]')
 
         if imagenet_default_mean_and_std:
             mean = IMAGENET_DEFAULT_MEAN
@@ -123,14 +118,9 @@ class TableRecDataset(OFADataset):
         patch_image = self.patch_resize_transform(image)
         patch_mask = torch.tensor([True])
 
-        if self.split == 'train' and not self.scst:
-            caption = caption.translate(self.transtab).strip()
-            caption_token_list = [self._filter_token(token) if self.tag_special_re.search(token) else token for token in caption.strip().split()]
-            tgt_caption = ' '.join(caption_token_list[:self.max_tgt_length])
-        else:
-            caption = ' '.join(caption.strip().split())
-            caption_list = [cap.translate(self.transtab).strip() for cap in caption.strip().split('&&')]
-            tgt_caption = '&&'.join(caption_list)
+        caption_token_list = preprocess_tag_str(caption)
+        tgt_caption = ' '.join(caption_token_list[:self.max_tgt_length])
+
         src_item = self.encode_text(" extract the tag of the table in the image", use_bpe=False, add_if_not_exist=True)
         tgt_item = self.encode_text(" {}".format(tgt_caption), use_bpe=False, add_if_not_exist=True)
 
@@ -147,12 +137,6 @@ class TableRecDataset(OFADataset):
             "prev_output_tokens": prev_output_item
         }
         return example
-
-    def _filter_token(self, token):
-        if token.startswith("<td") or token in ['<tr>', '</td>', '</tr>']:
-            return token
-        else:
-            return token.translate(self.transtab_post).strip()
 
     def collater(self, samples, pad_to_length=None):
         """Merge a list of samples to form a mini-batch.

@@ -21,6 +21,7 @@ from tasks.ofa_task import OFATask, OFAConfig
 from data.mm_data.table_rec_dataset import TableRecDataset
 from data.file_dataset import FileDataset
 from utils.cider.pyciderevalcap.ciderD.ciderD import CiderD
+from utils.teds import TEDS, preprocess_tag_str, decode_to_html
 
 EVAL_BLEU_ORDER = 4
 
@@ -64,6 +65,7 @@ class TableRecConfig(OFAConfig):
 class TableRecTask(OFATask):
     def __init__(self, cfg: TableRecConfig, src_dict, tgt_dict):
         super().__init__(cfg, src_dict, tgt_dict)
+        self.teds = TEDS(n_jobs=4)
 
     def load_dataset(self, split, epoch=1, combine=False, **kwargs):
         paths = self.cfg.data.split(',')
@@ -84,8 +86,7 @@ class TableRecTask(OFATask):
             max_src_length=self.cfg.max_src_length,
             max_tgt_length=self.cfg.max_tgt_length,
             patch_image_size=self.cfg.patch_image_size,
-            imagenet_default_mean_and_std=self.cfg.imagenet_default_mean_and_std,
-            scst=getattr(self.cfg, 'scst', False)
+            imagenet_default_mean_and_std=self.cfg.imagenet_default_mean_and_std
         )
 
     def build_model(self, cfg):
@@ -137,23 +138,8 @@ class TableRecTask(OFATask):
         model.eval()
         if self.cfg.eval_bleu or self.cfg.eval_cider:
             hyps, refs = self._inference(self.sequence_generator, sample, model)
-            if self.cfg.eval_bleu:
-                if self.cfg.eval_tokenized_bleu:
-                    bleu = sacrebleu.corpus_bleu(hyps, list(zip_longest(*refs)), tokenize="none")
-                else:
-                    bleu = sacrebleu.corpus_bleu(hyps, list(zip_longest(*refs)))
-                logging_output["_bleu_sys_len"] = bleu.sys_len
-                logging_output["_bleu_ref_len"] = bleu.ref_len
-                # we split counts into separate entries so that they can be
-                # summed efficiently across workers using fast-stat-sync
-                assert len(bleu.counts) == EVAL_BLEU_ORDER
-                for i in range(EVAL_BLEU_ORDER):
-                    logging_output["_bleu_counts_" + str(i)] = bleu.counts[i]
-                    logging_output["_bleu_totals_" + str(i)] = bleu.totals[i]
-            if self.cfg.eval_cider:
-                scores = self._calculate_cider_scores(hyps, refs)
-                logging_output["_cider_score_sum"] = scores.sum()
-                logging_output["_cider_cnt"] = scores.size
+            score = self.teds.batch(hyps, refs)
+            logging_output["_teds"] = score
 
         return loss, sample_size, logging_output
 
@@ -229,19 +215,17 @@ class TableRecTask(OFATask):
 
         gen_out = self.inference_step(generator, [model], sample)
         hyps, refs = [], []
-        transtab = str.maketrans({key: None for key in string.punctuation})
         for i in range(len(gen_out)):
             decode_tokens = decode(gen_out[i][0]["tokens"])
-            hyps.append(decode_tokens.translate(transtab).strip())
-            refs.append(
-                [
-                    sent.translate(transtab).strip()
-                    for sent in decode(
-                        utils.strip_pad(sample["target"][i], self.tgt_dict.pad()),
-                        escape_unk=True,  # don't count <unk> as matches to the hypo
-                    ).split('&&')
-                ]
+            ref_decode_tokens = decode(
+                utils.strip_pad(sample["target"][i], self.tgt_dict.pad()),
+                escape_unk=True,  # don't count <unk> as matches to the hypo
             )
+            hyp_html = decode_to_html(preprocess_tag_str(decode_tokens, True)).strip()
+            ref_html = decode_to_html(preprocess_tag_str(ref_decode_tokens, True)).strip()
+
+            hyps.append(hyp_html)
+            refs.append(ref_html)
         if self.cfg.eval_print_samples:
             logger.info("example hypothesis: " + hyps[0])
             logger.info("example reference: " + ' && '.join(refs[0]))
