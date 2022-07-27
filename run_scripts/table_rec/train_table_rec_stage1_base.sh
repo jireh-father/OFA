@@ -85,7 +85,7 @@ for max_epoch in {5,}; do
 #          --eval-cider \
 #          --eval-cider-cached-tokens=${eval_cider_cached} \
 #          --eval-args='{"beam":5,"max_len_b":16,"no_repeat_ngram_size":3}' \
-          --best-checkpoint-metric=accuracy --maximize-best-checkpoint-metric \
+          --best-checkpoint-metric=acc --maximize-best-checkpoint-metric \
           --max-src-length=${max_src_length} \
           --max-tgt-length=${max_tgt_length} \
           --find-unused-parameters \
