@@ -77,7 +77,7 @@ def collate(samples, pad_idx, eos_idx):
     return batch
 
 
-class TableHtmlDataset(OFADataset):
+class TableRecDataset(OFADataset):
     def __init__(
         self,
         split,
@@ -86,7 +86,7 @@ class TableHtmlDataset(OFADataset):
         src_dict,
         tgt_dict=None,
         max_src_length=128,
-        max_tgt_length=400,
+        max_tgt_length=1000,
         patch_image_size=224,
         imagenet_default_mean_and_std=False,
         scst=False
