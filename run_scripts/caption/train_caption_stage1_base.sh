@@ -11,7 +11,7 @@ mkdir -p $log_dir $save_dir
 bpe_dir=../../utils/BPE
 user_dir=../../ofa_module
 
-data_dir=../../dataset/caption_data
+data_dir=/home/ubuntu/dataset/image_caption/caption_data
 data=${data_dir}/caption_stage1_train.tsv,${data_dir}/caption_val.tsv
 restore_file=../../checkpoints/ofa_base.pt
 selected_cols=0,4,2
