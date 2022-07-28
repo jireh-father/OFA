@@ -555,6 +555,9 @@ class TransformerEncoder(FairseqEncoder):
         image_position_ids = image_position_idx[None, :].expand(patch_images.size(0), image_num_patches)
 
         image_embed = image_embed.flatten(2).transpose(1, 2)
+        print("image_embed mid", image_embed.shape)
+        print("image_embed mid max", image_embed.max())
+        print("image_embed mid min", image_embed.min(), type(image_embed.min()))
         if sample_patch_num is not None:
             patch_orders = [
                 random.sample(range(image_num_patches), k=sample_patch_num)
@@ -568,6 +571,10 @@ class TransformerEncoder(FairseqEncoder):
             image_padding_mask = image_padding_mask.gather(1, patch_orders)
             image_position_ids = image_position_ids.gather(1, patch_orders)
         image_pos_embed = self.embed_image_positions(image_position_ids)
+        print("image_embed end", image_embed.shape)
+        print("image_embed end max", image_embed.max())
+        print("image_embed end min", image_embed.min(), type(image_embed.min()))
+
 
         return image_embed, image_num_patches, image_padding_mask, image_position_ids, image_pos_embed
 
