@@ -11,8 +11,7 @@ mkdir -p $log_dir $save_dir
 bpe_dir=../../utils/BPE
 user_dir=../../ofa_module
 
-#data_dir=/home/ubuntu/dataset/image_caption/caption_data
-data_dir=/home/ubuntu/dataset/table_ocr/pubtabnet/ofa_dataset
+data_dir=/home/ubuntu/dataset/image_caption/caption_data
 #data=${data_dir}/caption_stage1_train.tsv,${data_dir}/caption_val.tsv
 data=${data_dir}/ofa_dataset_train_sample2.tsv,${data_dir}/ofa_dataset_train_sample2.tsv
 
