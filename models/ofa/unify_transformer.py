@@ -539,7 +539,13 @@ class TransformerEncoder(FairseqEncoder):
         return values
 
     def get_patch_images_info(self, patch_images, sample_patch_num, device):
+        print("patch_images", patch_images.shape)
+        print("patch_images max", patch_images.max())
+        print("patch_images min", patch_images.min())
         image_embed = self.embed_images(patch_images)
+        print("image_embed", image_embed.shape)
+        print("image_embed max", image_embed.max())
+        print("image_embed min", image_embed.min())
         h, w = image_embed.shape[-2:]
         image_num_patches = h * w
         image_padding_mask = patch_images.new_zeros((patch_images.size(0), image_num_patches)).bool()
