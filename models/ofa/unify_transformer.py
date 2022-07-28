@@ -593,8 +593,8 @@ class TransformerEncoder(FairseqEncoder):
         if image_embed is not None:
             logger.info(image_embed.shape)
             print("min")
-            logger.info(image_embed.min())
-            logger.info(image_embed.max())
+            print(image_embed.min())
+            print(image_embed.max())
             print("max")
             image_embed = self.image_proj(image_embed)
             raise Exception("debug end")
