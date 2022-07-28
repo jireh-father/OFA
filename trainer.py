@@ -744,9 +744,13 @@ class Trainer(object):
 
         # forward and backward pass
         logging_outputs, sample_size, ooms = [], 0, 0
-        logger.info("Start training step")
+
         for i, sample in enumerate(samples):  # delayed update loop
+            print(sample)
+            logger.info("before preparing sampe")
             sample, is_dummy_batch = self._prepare_sample(sample)
+            print(sample)
+            logger.info("after preparing sampe")
 
             def maybe_no_sync():
                 """
