@@ -605,10 +605,11 @@ class TransformerEncoder(FairseqEncoder):
         # embed raw images
         if image_embed is not None:
             logger.info(image_embed.shape)
-            print("min")
+            print("image_embed break is cuda", image_embed.is_cuda)
+            print("image_embed break device", image_embed.device)
+            print("debug")
             print(image_embed.min())
             print(image_embed.max())
-            print("max")
             image_embed = self.image_proj(image_embed)
             raise Exception("debug end")
             image_x = image_embed = self.embed_scale * image_embed
@@ -729,6 +730,7 @@ class TransformerEncoder(FairseqEncoder):
         image_pos_embed = None
         image_pos_embed_2 = None
         logger.info("forward step 1")
+        print("device", src_tokens.device)
         if patch_images is not None:
             image_embed, image_num_patches, image_padding_mask, image_position_ids, image_pos_embed = \
                 self.get_patch_images_info(patch_images, sample_patch_num, src_tokens.device)
@@ -752,6 +754,7 @@ class TransformerEncoder(FairseqEncoder):
         print("image_embed out", image_embed.shape)
         print("image_embed out max", image_embed.max())
         print("image_embed out min", image_embed.min(), type(image_embed.min()))
+        print("image_embed out is cuda", image_embed.is_cuda)
         x, encoder_embedding = self.forward_embedding(
             src_tokens, image_embed, image_embed_2, token_embeddings,
             pos_embed, image_pos_embed, image_pos_embed_2
