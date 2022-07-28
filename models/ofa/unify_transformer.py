@@ -591,6 +591,7 @@ class TransformerEncoder(FairseqEncoder):
 
         # embed raw images
         if image_embed is not None:
+            logger.info("image_embed shape. "+image_embed.shape)
             image_embed = self.image_proj(image_embed)
             image_x = image_embed = self.embed_scale * image_embed
             if self.entangle_position_embedding and image_pos_embed is not None:
