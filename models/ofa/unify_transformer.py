@@ -749,6 +749,9 @@ class TransformerEncoder(FairseqEncoder):
         logger.info("forward step 5")
         pos_embed = self.embed_positions(utils.new_arange(src_tokens))
         logger.info("forward step 6")
+        print("image_embed out", image_embed.shape)
+        print("image_embed out max", image_embed.max())
+        print("image_embed out min", image_embed.min(), type(image_embed.min()))
         x, encoder_embedding = self.forward_embedding(
             src_tokens, image_embed, image_embed_2, token_embeddings,
             pos_embed, image_pos_embed, image_pos_embed_2
