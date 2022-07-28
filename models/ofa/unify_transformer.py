@@ -35,7 +35,8 @@ from torch import Tensor
 from .unify_transformer_layer import TransformerEncoderLayer, TransformerDecoderLayer
 from .resnet import ResNet
 from .frozen_bn import FrozenBatchNorm2d
-
+import logging
+logger = logging.getLogger(__name__)
 
 DEFAULT_MAX_SOURCE_POSITIONS = 1024
 DEFAULT_MAX_TARGET_POSITIONS = 1024
@@ -708,6 +709,7 @@ class TransformerEncoder(FairseqEncoder):
         image_embed_2 = None
         image_pos_embed = None
         image_pos_embed_2 = None
+        logger.info("forward step 1")
         if patch_images is not None:
             image_embed, image_num_patches, image_padding_mask, image_position_ids, image_pos_embed = \
                 self.get_patch_images_info(patch_images, sample_patch_num, src_tokens.device)
@@ -716,20 +718,23 @@ class TransformerEncoder(FairseqEncoder):
             image_embed_2, image_num_patches_2, image_padding_mask_2, image_position_ids_2, image_pos_embed_2 = \
                 self.get_patch_images_info(patch_images_2, sample_patch_num, src_tokens.device)
             image_padding_mask_2[~patch_masks] = True
-
+        logger.info("forward step 2")
         encoder_padding_mask = src_tokens.eq(self.padding_idx)
+        logger.info("forward step 3")
         if patch_images is not None:
             encoder_padding_mask = torch.cat([image_padding_mask, encoder_padding_mask], dim=1)
         if patch_images_2 is not None:
             encoder_padding_mask = torch.cat([image_padding_mask_2, encoder_padding_mask], dim=1)
+        logger.info("forward step 4")
         has_pads = (src_tokens.device.type == "xla" or encoder_padding_mask.any())
-
+        logger.info("forward step 5")
         pos_embed = self.embed_positions(utils.new_arange(src_tokens))
+        logger.info("forward step 6")
         x, encoder_embedding = self.forward_embedding(
             src_tokens, image_embed, image_embed_2, token_embeddings,
             pos_embed, image_pos_embed, image_pos_embed_2
         )
-
+        logger.info("forward step 7")
         # account for padding while computing the representation
         if has_pads:
             x = x * (1 - encoder_padding_mask.unsqueeze(-1).type_as(x))
