@@ -545,7 +545,7 @@ class TransformerEncoder(FairseqEncoder):
         image_embed = self.embed_images(patch_images)
         print("image_embed", image_embed.shape)
         print("image_embed max", image_embed.max())
-        print("image_embed min", image_embed.min())
+        print("image_embed min", image_embed.min(), type(image_embed.min()))
         h, w = image_embed.shape[-2:]
         image_num_patches = h * w
         image_padding_mask = patch_images.new_zeros((patch_images.size(0), image_num_patches)).bool()
