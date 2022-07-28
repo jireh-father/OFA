@@ -175,4 +175,4 @@ class TEDS(object):
         else:
             inputs = [{'pred': pred_htmls[i], 'true': true_htmls[i]} for i in range(len(true_htmls))]
             scores = parallel_process(inputs, self.evaluate, use_kwargs=True, n_jobs=self.n_jobs, front_num=1)
-        return scores / len(true_htmls)
+        return scores

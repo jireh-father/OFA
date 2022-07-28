@@ -88,18 +88,29 @@ class TableRecTask(OFATask):
         if self.cfg.eval:
             hyps, refs = self._inference(self.sequence_generator, sample, model)
             score = self.teds.batch(hyps, refs)
-            logging_output["_teds"] = score
+            logging_output["_teds_score_sum"] = sum(score)
+            logging_output["_teds_cnt"] = len(score)
 
         return loss, sample_size, logging_output
 
     def reduce_metrics(self, logging_outputs, criterion):
         super().reduce_metrics(logging_outputs, criterion)
 
+        def sum_logs(key):
+            import torch
+            result = sum(log.get(key, 0) for log in logging_outputs)
+            if torch.is_tensor(result):
+                result = result.cpu()
+            return result
+
         if self.cfg.eval:
             def compute_teds(meters):
-                teds = meters["_teds"].sum
+                teds = meters["_teds_score_sum"].sum / meters["_teds_cnt"].sum
                 teds = teds if isinstance(teds, float) else teds.item()
                 return round(teds, 3)
+
+            metrics.log_scalar("_teds_score_sum", sum_logs("_teds_score_sum"))
+            metrics.log_scalar("_teds_cnt", sum_logs("_teds_cnt"))
 
             metrics.log_derived("teds", compute_teds)
 
