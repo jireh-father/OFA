@@ -11,10 +11,15 @@ mkdir -p $log_dir $save_dir
 bpe_dir=../../utils/BPE
 user_dir=../../ofa_module
 
-data_dir=/home/ubuntu/dataset/image_caption/caption_data
-data=${data_dir}/caption_stage1_train.tsv,${data_dir}/caption_val.tsv
+#data_dir=/home/ubuntu/dataset/image_caption/caption_data
+data_dir=/home/ubuntu/dataset/table_ocr/pubtabnet/ofa_dataset
+#data=${data_dir}/caption_stage1_train.tsv,${data_dir}/caption_val.tsv
+data=${data_dir}/ofa_dataset_train_sample2.tsv,${data_dir}/ofa_dataset_train_sample2.tsv
+
 restore_file=../../checkpoints/ofa_base.pt
-selected_cols=0,4,2
+#selected_cols=0,4,2
+selected_cols=0,1,2
+
 
 task=caption
 arch=ofa_base
