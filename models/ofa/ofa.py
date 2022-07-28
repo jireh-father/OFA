@@ -85,7 +85,12 @@ class OFAModel(TransformerModel):
     ):
         if classification_head_name is not None:
             features_only = True
-
+        logger.info(
+            src_tokens
+        )
+        logger.info(
+            "forward"
+        )
         encoder_out = self.encoder(
             src_tokens,
             src_lengths=src_lengths,
