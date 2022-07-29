@@ -310,6 +310,8 @@ class Dictionary:
         append_eos=True,
         reverse_order=False,
     ) -> torch.IntTensor:
+        import traceback
+        traceback.print_exc()
         words = line_tokenizer(line)
         if reverse_order:
             words = list(reversed(words))
