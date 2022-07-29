@@ -89,7 +89,7 @@ class OFATask(FairseqTask):
         tgt_dict = cls.load_dictionary(
             os.path.join(cfg.bpe_dir, "dict.txt")
         )
-        print(tgt_dict)
+        print(tgt_dict.symbols)
         sys.exit()
         src_dict.add_symbol("<mask>")
         tgt_dict.add_symbol("<mask>")
