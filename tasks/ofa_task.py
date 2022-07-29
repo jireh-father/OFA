@@ -90,6 +90,7 @@ class OFATask(FairseqTask):
             os.path.join(cfg.bpe_dir, "dict.txt")
         )
         print(tgt_dict.symbols)
+        print(tgt_dict.indices)
         sys.exit()
         src_dict.add_symbol("<mask>")
         tgt_dict.add_symbol("<mask>")
