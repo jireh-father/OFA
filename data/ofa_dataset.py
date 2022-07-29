@@ -28,7 +28,7 @@ class OFADataset(FairseqDataset):
     def __len__(self):
         return len(self.dataset)
 
-    def encode_text(self, text, length=None, append_bos=False, append_eos=False, use_bpe=False, add_if_not_exist=True):
+    def encode_text(self, text, length=None, append_bos=False, append_eos=False, use_bpe=True, add_if_not_exist=False):
         s = self.tgt_dict.encode_line(
             line=self.bpe.encode(text) if use_bpe else text,
             add_if_not_exist=add_if_not_exist,
