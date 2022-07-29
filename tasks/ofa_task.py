@@ -89,9 +89,7 @@ class OFATask(FairseqTask):
         tgt_dict = cls.load_dictionary(
             os.path.join(cfg.bpe_dir, "dict.txt")
         )
-        print(tgt_dict.symbols)
-        print(tgt_dict.indices)
-        sys.exit()
+
         src_dict.add_symbol("<mask>")
         tgt_dict.add_symbol("<mask>")
         for i in range(cfg.code_dict_size):
@@ -101,6 +99,10 @@ class OFATask(FairseqTask):
         for i in range(cfg.num_bins):
             src_dict.add_symbol("<bin_{}>".format(i))
             tgt_dict.add_symbol("<bin_{}>".format(i))
+
+        print(tgt_dict.symbols)
+        print(tgt_dict.indices)
+        sys.exit()
 
         logger.info("source dictionary: {} types".format(len(src_dict)))
         logger.info("target dictionary: {} types".format(len(tgt_dict)))
