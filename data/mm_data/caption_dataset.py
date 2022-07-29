@@ -128,8 +128,8 @@ class CaptionDataset(OFADataset):
             caption = ' '.join(caption.strip().split())
             caption_list = [cap.translate(self.transtab).strip() for cap in caption.strip().split('&&')]
             tgt_caption = '&&'.join(caption_list)
-        src_item = self.encode_text(" what does the image describe?", use_bpe=False, add_if_not_exist=True)
-        tgt_item = self.encode_text(" {}".format(tgt_caption), use_bpe=False, add_if_not_exist=True)
+        src_item = self.encode_text(" what does the image describe?", use_bpe=False, add_if_not_exist=False)
+        tgt_item = self.encode_text(" {}".format(tgt_caption), use_bpe=False, add_if_not_exist=False)
 
         src_item = torch.cat([self.bos_item, src_item, self.eos_item])
         target_item = torch.cat([tgt_item, self.eos_item])
