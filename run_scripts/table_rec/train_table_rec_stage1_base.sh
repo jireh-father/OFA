@@ -15,8 +15,7 @@ data_dir=/home/ubuntu/dataset/table_ocr/pubtabnet/ofa_dataset
 #data=${data_dir}/ofa_dataset_train_sample.tsv,${data_dir}/ofa_dataset_val.tsv
 data=${data_dir}/ofa_dataset_train_sample.tsv,${data_dir}/ofa_dataset_train_sample.tsv
 restore_file=../../checkpoints/ofa_base.pt
-#selected_cols=0,1,2
-selected_cols=0,4,2
+selected_cols=0,1,2
 
 task=table_rec
 arch=ofa_base
