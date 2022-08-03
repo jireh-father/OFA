@@ -100,10 +100,6 @@ class OFATask(FairseqTask):
             src_dict.add_symbol("<bin_{}>".format(i))
             tgt_dict.add_symbol("<bin_{}>".format(i))
 
-        print(tgt_dict.symbols)
-        print(tgt_dict.indices)
-        sys.exit()
-
         logger.info("source dictionary: {} types".format(len(src_dict)))
         logger.info("target dictionary: {} types".format(len(tgt_dict)))
         return cls(cfg, src_dict, tgt_dict)

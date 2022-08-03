@@ -24,6 +24,8 @@ def convert_ptn_item_to_simple_html(item):
     text_set = set()
     i = 0
     tags = []
+    max_col_span = 0
+    max_row_span = 0
     while i < len(item['html']['structure']['tokens']):
         tag = item['html']['structure']['tokens'][i]
         tag = tag.strip()
@@ -31,6 +33,15 @@ def convert_ptn_item_to_simple_html(item):
         if tag in ["<thead>", "</thead>", "<tbody>", "</tbody>"]:
             continue
         if tag == "<td":
+            split_tag = item['html']['structure']['tokens'][i].strip().split('"')
+            num_spans = int(split_tag[1])
+            if "col" in split_tag[0]:
+                if num_spans > max_col_span:
+                    max_col_span = num_spans
+            else:
+                if num_spans > max_row_span:
+                    max_row_span = num_spans
+
             tag += item['html']['structure']['tokens'][i].strip() + item['html']['structure']['tokens'][i + 1]
             i += 2
             tags.append(tag.strip())
@@ -46,7 +57,7 @@ def convert_ptn_item_to_simple_html(item):
                 table_tag.append(text)
                 text_set.update(set(text))
             i += 1
-    return table_tag, text_set
+    return table_tag, text_set, max_row_span, max_col_span
 
 
 def main(args):
@@ -59,11 +70,17 @@ def main(args):
     val_image_dir = os.path.join(args.image_root, "val")
     trainf = open(train_output, "w+", encoding='utf-8')
     valf = open(val_output, "w+", encoding='utf-8')
+    max_row_span = 0
+    max_col_span = 0
     for i, line in enumerate(open(args.label_path, encoding='utf-8')):
         if i % 10 == 0:
             print(i)
         item = json.loads(line)
-        table_tag, text_set = convert_ptn_item_to_simple_html(item)
+        table_tag, text_set, tmp_max_row_span, tmp_max_col_span = convert_ptn_item_to_simple_html(item)
+        if max_row_span < tmp_max_row_span:
+            max_row_span = tmp_max_row_span
+        if max_col_span < tmp_max_col_span:
+            max_col_span = tmp_max_col_span
         total_chars.update(text_set)
         if item['split'] == "train":
             image_dir = train_image_dir
@@ -80,13 +97,15 @@ def main(args):
         byte_data = img_buffer.getvalue()
         base64_str = base64.b64encode(byte_data)  # bytes
         base64_str = base64_str.decode("utf-8")  # str
-        outf.write("{}\n".format("\t".join([str(i + 1), base64_str, " ".join(table_tag)])))
+        outf.write("{}\n".format("\t".join([str(i + 1), base64_str, "".join(table_tag)])))
 
     total_chars = list(total_chars)
     total_chars.sort()
     json.dump(total_chars, open(chars_output, "w+"))
     trainf.close()
     valf.close()
+    print("max_row_span", max_row_span)
+    print("max_col_span", max_col_span)
     print("done")
 
 

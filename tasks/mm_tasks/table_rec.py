@@ -6,6 +6,7 @@
 from dataclasses import dataclass, field
 import json
 import logging
+import os
 from typing import Optional
 from argparse import Namespace
 from itertools import zip_longest
@@ -16,6 +17,8 @@ import sacrebleu
 import string
 from fairseq import metrics, utils
 from fairseq.tasks import register_task
+
+from omegaconf import DictConfig
 
 from tasks.ofa_task import OFATask, OFAConfig
 from data.mm_data.table_rec_dataset import TableRecDataset
@@ -41,6 +44,9 @@ class TableRecConfig(OFAConfig):
     eval_print_samples: bool = field(
         default=False, metadata={"help": "print sample generations during validation"}
     )
+    max_spans: int = field(
+        default=10, metadata={"help": "max numbers of span cells"}
+    )
 
 
 @register_task("table_rec", dataclass=TableRecConfig)
@@ -48,6 +54,39 @@ class TableRecTask(OFATask):
     def __init__(self, cfg: TableRecConfig, src_dict, tgt_dict):
         super().__init__(cfg, src_dict, tgt_dict)
         self.teds = TEDS(n_jobs=4)
+
+    @classmethod
+    def setup_task(cls, cfg: DictConfig, **kwargs):
+        """Setup the task."""
+
+        # load dictionaries
+        src_dict = cls.load_dictionary(
+            os.path.join(cfg.bpe_dir, "dict.txt")
+        )
+        tgt_dict = cls.load_dictionary(
+            os.path.join(cfg.bpe_dir, "dict.txt")
+        )
+
+        src_dict.add_symbol("<tr>")
+        src_dict.add_symbol("</tr>")
+        src_dict.add_symbol("<td>")
+        src_dict.add_symbol("</td>")
+        for i in range(cfg.max_spans - 1):
+            src_dict.add_symbol('<tdcolspan="{}">'.format(i+2))
+            src_dict.add_symbol('<tdrowspan="{}">'.format(i + 2))
+        src_dict.add_symbol("<mask>")
+        tgt_dict.add_symbol("<mask>")
+        for i in range(cfg.code_dict_size):
+            src_dict.add_symbol("<code_{}>".format(i))
+            tgt_dict.add_symbol("<code_{}>".format(i))
+        # quantization
+        for i in range(cfg.num_bins):
+            src_dict.add_symbol("<bin_{}>".format(i))
+            tgt_dict.add_symbol("<bin_{}>".format(i))
+
+        logger.info("source dictionary: {} types".format(len(src_dict)))
+        logger.info("target dictionary: {} types".format(len(tgt_dict)))
+        return cls(cfg, src_dict, tgt_dict)
 
     def load_dataset(self, split, epoch=1, combine=False, **kwargs):
         paths = self.cfg.data.split(',')
