@@ -71,9 +71,15 @@ class TableRecTask(OFATask):
         src_dict.add_symbol("</tr>")
         src_dict.add_symbol("<td>")
         src_dict.add_symbol("</td>")
+        tgt_dict.add_symbol("<tr>")
+        tgt_dict.add_symbol("</tr>")
+        tgt_dict.add_symbol("<td>")
+        tgt_dict.add_symbol("</td>")
         for i in range(cfg.max_spans - 1):
             src_dict.add_symbol('<tdcolspan="{}">'.format(i+2))
             src_dict.add_symbol('<tdrowspan="{}">'.format(i + 2))
+            tgt_dict.add_symbol('<tdcolspan="{}">'.format(i + 2))
+            tgt_dict.add_symbol('<tdrowspan="{}">'.format(i + 2))
         src_dict.add_symbol("<mask>")
         tgt_dict.add_symbol("<mask>")
         for i in range(cfg.code_dict_size):
