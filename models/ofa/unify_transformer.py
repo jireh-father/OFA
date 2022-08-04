@@ -1319,6 +1319,9 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         x = x.transpose(0, 1)
 
         self_attn_padding_mask: Optional[Tensor] = None
+        print("self.padding_idx", self.padding_idx)
+        print(prev_output_tokens.eq(self.padding_idx))
+        print(prev_output_tokens.eq(self.padding_idx).any())
         if self.cross_self_attention or prev_output_tokens.eq(self.padding_idx).any():
             self_attn_padding_mask = prev_output_tokens.eq(self.padding_idx)
 
