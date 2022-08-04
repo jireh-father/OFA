@@ -200,6 +200,6 @@ class TableRecTask(OFATask):
             refs.append(ref_html)
         # if self.cfg.eval_print_samples:
         logger.info("example hypothesis: " + hyps[0])
-        logger.info("example reference: " + ' && '.join(refs[0]))
+        logger.info("example reference: " + refs[0])
 
         return hyps, refs
