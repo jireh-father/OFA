@@ -145,6 +145,7 @@ class TableRecTask(OFATask):
             score = self.teds.batch(hyps, refs)
             logging_output["_teds_score_sum"] = sum(score)
             logging_output["_teds_cnt"] = len(score)
+            print("eval", logging_output)
 
         return loss, sample_size, logging_output
 
@@ -161,6 +162,8 @@ class TableRecTask(OFATask):
         if self.cfg.eval:
             def compute_teds(meters):
                 print("meters", meters)
+                print(meters["_teds_score_sum"].sum)
+                print(meters["_teds_cnt"].sum)
                 teds = meters["_teds_score_sum"].sum / meters["_teds_cnt"].sum
                 teds = teds if isinstance(teds, float) else teds.item()
                 return round(teds, 3)
