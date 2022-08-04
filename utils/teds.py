@@ -66,7 +66,7 @@ transtab_post = str.maketrans({key: None for key in r"""<>"=/"""})
 tag_special_re = re.compile(r'[<>"=/]')
 
 
-def _filter_token(token, decode_td_span_tag=False):
+def _filter_token(token, decode_td_span_tag=False, remove_close_tag=False):
     if token.startswith("<td") or token in ['<tr>', '</td>', '</tr>']:
         if decode_td_span_tag and (token.startswith("<tdr") or token.startswith("<tdc")):
             return "<td {}".format(token[3:])
@@ -76,17 +76,23 @@ def _filter_token(token, decode_td_span_tag=False):
         return token.translate(transtab_post).strip()
 
 
-def preprocess_tag_str(tag_str, decode_td_span_tag=False):
+def preprocess_tag_str(tag_str, decode_td_span_tag=False, remove_close_tag=False):
     caption = tag_str.translate(transtab).strip()
-    caption_token_list = [_filter_token(token, decode_td_span_tag) if tag_special_re.search(token) else token for token
-                          in
-                          caption.strip().split()]
+    caption_token_list = [
+        _filter_token(token, decode_td_span_tag, remove_close_tag) if tag_special_re.search(token) else token for token
+        in
+        caption.strip().split() if not remove_close_tag or not token.startswith("</t")]
     return caption_token_list
 
 
-def decode_to_html(tags):
+def decode_to_html(tags, restore_close_tag=False):
     html_str = ""
     for i, tag in enumerate(tags):
+        if restore_close_tag and tag == "<tr>" and i > 0:
+            html_str += "</td></tr>"
+        if restore_close_tag and tag == "<td>" and tags[i - 1] != "<tr>":
+            html_str += "</td>"
+
         if tag.startswith("<"):
             html_str += tag
         else:
@@ -94,6 +100,8 @@ def decode_to_html(tags):
                 html_str += tag
             else:
                 html_str += " {}".format(tag)
+    if restore_close_tag:
+        html_str += "</td></tr>"
     return html_str
 
 

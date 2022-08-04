@@ -47,6 +47,9 @@ class TableRecConfig(OFAConfig):
     max_spans: int = field(
         default=10, metadata={"help": "max numbers of span cells"}
     )
+    remove_close_tag: bool = field(
+        default=False, metadata={"help": "whether to remove close tags."}
+    )
 
 
 @register_task("table_rec", dataclass=TableRecConfig)
@@ -67,16 +70,18 @@ class TableRecTask(OFATask):
             os.path.join(cfg.bpe_dir, "dict.txt")
         )
 
+        if not cfg.remove_close_tag:
+            src_dict.add_symbol("</tr>")
+            src_dict.add_symbol("</td>")
+            tgt_dict.add_symbol("</tr>")
+            tgt_dict.add_symbol("</td>")
         src_dict.add_symbol("<tr>")
-        src_dict.add_symbol("</tr>")
         src_dict.add_symbol("<td>")
-        src_dict.add_symbol("</td>")
         tgt_dict.add_symbol("<tr>")
-        tgt_dict.add_symbol("</tr>")
         tgt_dict.add_symbol("<td>")
-        tgt_dict.add_symbol("</td>")
+
         for i in range(cfg.max_spans - 1):
-            src_dict.add_symbol('<tdcolspan="{}">'.format(i+2))
+            src_dict.add_symbol('<tdcolspan="{}">'.format(i + 2))
             src_dict.add_symbol('<tdrowspan="{}">'.format(i + 2))
             tgt_dict.add_symbol('<tdcolspan="{}">'.format(i + 2))
             tgt_dict.add_symbol('<tdrowspan="{}">'.format(i + 2))
@@ -113,7 +118,8 @@ class TableRecTask(OFATask):
             max_src_length=self.cfg.max_src_length,
             max_tgt_length=self.cfg.max_tgt_length,
             patch_image_size=self.cfg.patch_image_size,
-            imagenet_default_mean_and_std=self.cfg.imagenet_default_mean_and_std
+            imagenet_default_mean_and_std=self.cfg.imagenet_default_mean_and_std,
+            remove_close_tag=self.cfg.remove_close_tag,
         )
 
     def build_model(self, cfg):
@@ -183,8 +189,8 @@ class TableRecTask(OFATask):
                 utils.strip_pad(sample["target"][i], self.tgt_dict.pad()),
                 escape_unk=True,  # don't count <unk> as matches to the hypo
             )
-            hyp_html = decode_to_html(preprocess_tag_str(decode_tokens, True)).strip()
-            ref_html = decode_to_html(preprocess_tag_str(ref_decode_tokens, True)).strip()
+            hyp_html = decode_to_html(preprocess_tag_str(decode_tokens, True), True).strip()
+            ref_html = decode_to_html(preprocess_tag_str(ref_decode_tokens, True), True).strip()
 
             hyps.append(hyp_html)
             refs.append(ref_html)
