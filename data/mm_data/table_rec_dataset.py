@@ -121,7 +121,7 @@ class TableRecDataset(OFADataset):
         caption_token_list = preprocess_tag_str(caption)
         print("tag", len(caption_token_list))
         print("encoded", len(self.encode_text(" {}".format(' '.join(caption_token_list)))))
-        print("<td>", self.encode_text(" <td>"))
+        print("<td>", self.encode_text(" <td>"), self.bpe.encode(" <td>"))
         tgt_caption = ' '.join(caption_token_list[:self.max_tgt_length])
 
         src_item = self.encode_text(" extract the tag of the table in the image")
