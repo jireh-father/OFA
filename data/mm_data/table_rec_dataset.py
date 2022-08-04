@@ -128,6 +128,9 @@ class TableRecDataset(OFADataset):
         target_item = torch.cat([tgt_item, self.eos_item])
         prev_output_item = torch.cat([self.bos_item, tgt_item])
 
+        print("in dataset target_item", target_item.shape, target_item)
+        print("in dataset prev_output_item", prev_output_item.shape, prev_output_item)
+
         example = {
             "id": uniq_id,
             "source": src_item,
