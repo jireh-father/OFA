@@ -123,10 +123,10 @@ class TableRecDataset(OFADataset):
         patch_mask = torch.tensor([True])
 
         caption_token_list = preprocess_tag_str(caption, remove_close_tag=self.remove_close_tag)
-        print(caption_token_list)
-        print("tag", len(caption_token_list))
-        print("encoded", len(self.encode_text(" {}".format(' '.join(caption_token_list)), use_bpe=self.use_bpe)))
-        print("<td>", self.encode_text(" <td>", use_bpe=self.use_bpe))
+        # print(caption_token_list)
+        # print("tag", len(caption_token_list))
+        # print("encoded", len(self.encode_text(" {}".format(' '.join(caption_token_list)), use_bpe=self.use_bpe)))
+        # print("<td>", self.encode_text(" <td>", use_bpe=self.use_bpe))
         tgt_caption = ' '.join(caption_token_list[:self.max_tgt_length])
 
         src_item = self.encode_text(" what is the structure and content of the table?", use_bpe=self.use_bpe)
