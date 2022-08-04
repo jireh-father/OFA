@@ -51,7 +51,7 @@ class TableRecConfig(OFAConfig):
         default=True, metadata={"help": "whether to remove close tags."}
     )
     use_bpe: bool = field(
-        default=True, metadata={"help": "whether to use bpe."}
+        default=False, metadata={"help": "whether to use bpe."}
     )
 
 
