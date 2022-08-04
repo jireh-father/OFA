@@ -48,7 +48,7 @@ class TableRecConfig(OFAConfig):
         default=10, metadata={"help": "max numbers of span cells"}
     )
     remove_close_tag: bool = field(
-        default=False, metadata={"help": "whether to remove close tags."}
+        default=True, metadata={"help": "whether to remove close tags."}
     )
 
 

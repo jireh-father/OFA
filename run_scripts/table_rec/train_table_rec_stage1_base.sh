@@ -100,7 +100,6 @@ for max_epoch in {5,}; do
           --drop-worst-after=${drop_worst_after} \
           --fp16 \
           --fp16-scale-window=512 \
-          --remove_close_tag \
           --eval-print-samples \
           --num-workers=0 > ${log_file} 2>&1
     done
