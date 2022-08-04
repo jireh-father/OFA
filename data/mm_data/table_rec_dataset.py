@@ -118,7 +118,10 @@ class TableRecDataset(OFADataset):
         patch_image = self.patch_resize_transform(image)
         patch_mask = torch.tensor([True])
 
+
         caption_token_list = preprocess_tag_str(caption)
+        print("tag", caption_token_list)
+        print("encode", self.encode_text(" {}".format(' '.join(caption_token_list))))
         tgt_caption = ' '.join(caption_token_list[:self.max_tgt_length])
 
         src_item = self.encode_text(" extract the tag of the table in the image")
@@ -127,9 +130,6 @@ class TableRecDataset(OFADataset):
         src_item = torch.cat([self.bos_item, src_item, self.eos_item])
         target_item = torch.cat([tgt_item, self.eos_item])
         prev_output_item = torch.cat([self.bos_item, tgt_item])
-
-        print("in dataset target_item", target_item.shape, target_item)
-        print("in dataset prev_output_item", prev_output_item.shape, prev_output_item)
 
         example = {
             "id": uniq_id,

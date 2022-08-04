@@ -36,11 +36,11 @@ from .unify_transformer_layer import TransformerEncoderLayer, TransformerDecoder
 from .resnet import ResNet
 from .frozen_bn import FrozenBatchNorm2d
 import logging
+
 logger = logging.getLogger(__name__)
 
 DEFAULT_MAX_SOURCE_POSITIONS = 1024
 DEFAULT_MAX_TARGET_POSITIONS = 1024
-
 
 DEFAULT_MIN_PARAMS_TO_WRAP = int(1e8)
 
@@ -57,10 +57,10 @@ def make_token_bucket_position(bucket_size, max_position=DEFAULT_MAX_SOURCE_POSI
     relative_pos = context_pos - memory_pos
     sign = torch.sign(relative_pos)
     mid = bucket_size // 2
-    abs_pos = torch.where((relative_pos<mid) & (relative_pos > -mid), mid-1, torch.abs(relative_pos))
-    log_pos = torch.ceil(torch.log(abs_pos/mid)/math.log((max_position-1)/mid) * (mid-1)) + mid
+    abs_pos = torch.where((relative_pos < mid) & (relative_pos > -mid), mid - 1, torch.abs(relative_pos))
+    log_pos = torch.ceil(torch.log(abs_pos / mid) / math.log((max_position - 1) / mid) * (mid - 1)) + mid
     log_pos = log_pos.int()
-    bucket_pos = torch.where(abs_pos.le(mid), relative_pos, log_pos*sign).long()
+    bucket_pos = torch.where(abs_pos.le(mid), relative_pos, log_pos * sign).long()
     return bucket_pos + bucket_size - 1
 
 
@@ -281,7 +281,7 @@ class TransformerModel(FairseqEncoderDecoderModel):
                     "--share-all-embeddings requires --encoder-embed-dim to match --decoder-embed-dim"
                 )
             if args.decoder_embed_path and (
-                args.decoder_embed_path != args.encoder_embed_path
+                    args.decoder_embed_path != args.encoder_embed_path
             ):
                 raise ValueError(
                     "--share-all-embeddings not compatible with --decoder-embed-path"
@@ -343,14 +343,14 @@ class TransformerModel(FairseqEncoderDecoderModel):
     # TorchScript doesn't support optional arguments with variable length (**kwargs).
     # Current workaround is to add union of all arguments in child classes.
     def forward(
-        self,
-        src_tokens,
-        src_lengths,
-        prev_output_tokens,
-        return_all_hiddens: bool = True,
-        features_only: bool = False,
-        alignment_layer: Optional[int] = None,
-        alignment_heads: Optional[int] = None,
+            self,
+            src_tokens,
+            src_lengths,
+            prev_output_tokens,
+            return_all_hiddens: bool = True,
+            features_only: bool = False,
+            alignment_layer: Optional[int] = None,
+            alignment_heads: Optional[int] = None,
     ):
         """
         Run the forward pass for an encoder-decoder model.
@@ -377,10 +377,10 @@ class TransformerModel(FairseqEncoderDecoderModel):
     # helper function in the Base Class.
     @torch.jit.export
     def get_normalized_probs(
-        self,
-        net_output: Tuple[Tensor, Optional[Dict[str, List[Optional[Tensor]]]]],
-        log_probs: bool,
-        sample: Optional[Dict[str, Tensor]] = None,
+            self,
+            net_output: Tuple[Tensor, Optional[Dict[str, List[Optional[Tensor]]]]],
+            log_probs: bool,
+            sample: Optional[Dict[str, Tensor]] = None,
     ):
         """Get normalized probabilities (or log probs) from a net's output."""
         return self.get_normalized_probs_scriptable(net_output, log_probs, sample)
@@ -533,19 +533,13 @@ class TransformerEncoder(FairseqEncoder):
         rp_bucket = self.image_rp_bucket.unsqueeze(0).expand(
             bsz, rp_bucket_size, rp_bucket_size
         ).gather(1, image_position_ids[:, :, None].expand(bsz, seq_len, rp_bucket_size)
-        ).gather(2, image_position_ids[:, None, :].expand(bsz, seq_len, seq_len))
+                 ).gather(2, image_position_ids[:, None, :].expand(bsz, seq_len, seq_len))
         values = F.embedding(rp_bucket, self.image_rel_pos_table_list[idx].weight)
         values = values.permute(0, 3, 1, 2)
         return values
 
     def get_patch_images_info(self, patch_images, sample_patch_num, device):
-        print("patch_images", patch_images.shape)
-        print("patch_images max", patch_images.max())
-        print("patch_images min", patch_images.min())
         image_embed = self.embed_images(patch_images)
-        print("image_embed", image_embed.shape)
-        print("image_embed max", image_embed.max())
-        print("image_embed min", image_embed.min(), type(image_embed.min()))
         h, w = image_embed.shape[-2:]
         image_num_patches = h * w
         image_padding_mask = patch_images.new_zeros((patch_images.size(0), image_num_patches)).bool()
@@ -555,9 +549,6 @@ class TransformerEncoder(FairseqEncoder):
         image_position_ids = image_position_idx[None, :].expand(patch_images.size(0), image_num_patches)
 
         image_embed = image_embed.flatten(2).transpose(1, 2)
-        print("image_embed mid", image_embed.shape)
-        print("image_embed mid max", image_embed.max())
-        print("image_embed mid min", image_embed.min(), type(image_embed.min()))
         if sample_patch_num is not None:
             patch_orders = [
                 random.sample(range(image_num_patches), k=sample_patch_num)
@@ -571,22 +562,18 @@ class TransformerEncoder(FairseqEncoder):
             image_padding_mask = image_padding_mask.gather(1, patch_orders)
             image_position_ids = image_position_ids.gather(1, patch_orders)
         image_pos_embed = self.embed_image_positions(image_position_ids)
-        print("image_embed end", image_embed.shape)
-        print("image_embed end max", image_embed.max())
-        print("image_embed end min", image_embed.min(), type(image_embed.min()))
-
 
         return image_embed, image_num_patches, image_padding_mask, image_position_ids, image_pos_embed
 
     def forward_embedding(
-        self,
-        src_tokens,
-        image_embed: Optional[torch.Tensor] = None,
-        image_embed_2: Optional[torch.Tensor] = None,
-        token_embedding: Optional[torch.Tensor] = None,
-        pos_embed: Optional[torch.Tensor] = None,
-        image_pos_embed: Optional[torch.Tensor] = None,
-        image_pos_embed_2: Optional[torch.Tensor] = None
+            self,
+            src_tokens,
+            image_embed: Optional[torch.Tensor] = None,
+            image_embed_2: Optional[torch.Tensor] = None,
+            token_embedding: Optional[torch.Tensor] = None,
+            pos_embed: Optional[torch.Tensor] = None,
+            image_pos_embed: Optional[torch.Tensor] = None,
+            image_pos_embed_2: Optional[torch.Tensor] = None
     ):
         # embed tokens and positions
         if token_embedding is None:
@@ -604,12 +591,6 @@ class TransformerEncoder(FairseqEncoder):
 
         # embed raw images
         if image_embed is not None:
-            logger.info(image_embed.shape)
-            print("image_embed break is cuda", image_embed.is_cuda)
-            print("image_embed break device", image_embed.device)
-            print("debug")
-            print(image_embed.min())
-            print(image_embed.max())
             image_embed = self.image_proj(image_embed)
             image_x = image_embed = self.embed_scale * image_embed
             if self.entangle_position_embedding and image_pos_embed is not None:
@@ -643,16 +624,16 @@ class TransformerEncoder(FairseqEncoder):
         return x, embed
 
     def forward(
-        self,
-        src_tokens,
-        src_lengths,
-        patch_images: Optional[torch.Tensor] = None,
-        patch_images_2: Optional[torch.Tensor] = None,
-        patch_masks: Optional[torch.Tensor] = None,
-        code_masks: Optional[torch.Tensor] = None,
-        return_all_hiddens: bool = False,
-        token_embeddings: Optional[torch.Tensor] = None,
-        sample_patch_num: Optional[int] = None
+            self,
+            src_tokens,
+            src_lengths,
+            patch_images: Optional[torch.Tensor] = None,
+            patch_images_2: Optional[torch.Tensor] = None,
+            patch_masks: Optional[torch.Tensor] = None,
+            code_masks: Optional[torch.Tensor] = None,
+            return_all_hiddens: bool = False,
+            token_embeddings: Optional[torch.Tensor] = None,
+            sample_patch_num: Optional[int] = None
     ):
         """
         Args:
@@ -691,15 +672,15 @@ class TransformerEncoder(FairseqEncoder):
     # Current workaround is to add a helper function with different name and
     # call the helper function from scriptable Subclass.
     def forward_scriptable(
-        self,
-        src_tokens,
-        src_lengths,
-        patch_images: Optional[torch.Tensor] = None,
-        patch_images_2: Optional[torch.Tensor] = None,
-        patch_masks: Optional[torch.Tensor] = None,
-        return_all_hiddens: bool = False,
-        token_embeddings: Optional[torch.Tensor] = None,
-        sample_patch_num: Optional[int] = None
+            self,
+            src_tokens,
+            src_lengths,
+            patch_images: Optional[torch.Tensor] = None,
+            patch_images_2: Optional[torch.Tensor] = None,
+            patch_masks: Optional[torch.Tensor] = None,
+            return_all_hiddens: bool = False,
+            token_embeddings: Optional[torch.Tensor] = None,
+            sample_patch_num: Optional[int] = None
     ):
         """
         Args:
@@ -728,8 +709,6 @@ class TransformerEncoder(FairseqEncoder):
         image_embed_2 = None
         image_pos_embed = None
         image_pos_embed_2 = None
-        logger.info("forward step 1")
-        print("device", src_tokens.device)
         if patch_images is not None:
             image_embed, image_num_patches, image_padding_mask, image_position_ids, image_pos_embed = \
                 self.get_patch_images_info(patch_images, sample_patch_num, src_tokens.device)
@@ -738,27 +717,17 @@ class TransformerEncoder(FairseqEncoder):
             image_embed_2, image_num_patches_2, image_padding_mask_2, image_position_ids_2, image_pos_embed_2 = \
                 self.get_patch_images_info(patch_images_2, sample_patch_num, src_tokens.device)
             image_padding_mask_2[~patch_masks] = True
-        logger.info("forward step 2")
         encoder_padding_mask = src_tokens.eq(self.padding_idx)
-        logger.info("forward step 3")
         if patch_images is not None:
             encoder_padding_mask = torch.cat([image_padding_mask, encoder_padding_mask], dim=1)
         if patch_images_2 is not None:
             encoder_padding_mask = torch.cat([image_padding_mask_2, encoder_padding_mask], dim=1)
-        logger.info("forward step 4")
         has_pads = (src_tokens.device.type == "xla" or encoder_padding_mask.any())
-        logger.info("forward step 5")
         pos_embed = self.embed_positions(utils.new_arange(src_tokens))
-        logger.info("forward step 6")
-        print("image_embed out", image_embed.shape)
-        print("image_embed out max", image_embed.max())
-        print("image_embed out min", image_embed.min(), type(image_embed.min()))
-        print("image_embed out is cuda", image_embed.is_cuda)
         x, encoder_embedding = self.forward_embedding(
             src_tokens, image_embed, image_embed_2, token_embeddings,
             pos_embed, image_pos_embed, image_pos_embed_2
         )
-        logger.info("forward step 7")
         # account for padding while computing the representation
         if has_pads:
             x = x * (1 - encoder_padding_mask.unsqueeze(-1).type_as(x))
@@ -794,7 +763,8 @@ class TransformerEncoder(FairseqEncoder):
             if patch_images_2 is not None:
                 self_attn_bias[:, :, :image_num_patches_2, :image_num_patches_2] += \
                     self.get_image_rel_pos_bias(image_position_ids_2, idx)
-                self_attn_bias[:, :, image_num_patches_2:image_num_patches_2+image_num_patches, image_num_patches_2:image_num_patches_2+image_num_patches] += \
+                self_attn_bias[:, :, image_num_patches_2:image_num_patches_2 + image_num_patches,
+                image_num_patches_2:image_num_patches_2 + image_num_patches] += \
                     self.get_image_rel_pos_bias(image_position_ids, idx)
             elif patch_images is not None:
                 self_attn_bias[:, :, :x.size(0) - src_tokens.size(1), :x.size(0) - src_tokens.size(1)] += \
@@ -918,8 +888,10 @@ class TransformerEncoder(FairseqEncoder):
             if (prefix + param_name) not in state_dict:
                 state_dict[prefix + param_name] = self.state_dict()[param_name]
 
-        if len(state_dict["encoder.embed_image_positions.weight"]) < len(self.state_dict()["embed_image_positions.weight"]):
-            num_posids_to_add = len(self.state_dict()["embed_image_positions.weight"]) - len(state_dict["encoder.embed_image_positions.weight"])
+        if len(state_dict["encoder.embed_image_positions.weight"]) < len(
+                self.state_dict()["embed_image_positions.weight"]):
+            num_posids_to_add = len(self.state_dict()["embed_image_positions.weight"]) - len(
+                state_dict["encoder.embed_image_positions.weight"])
             embed_dim = state_dict["encoder.embed_image_positions.weight"].size(1)
             new_pos_embed_to_add = torch.zeros(num_posids_to_add, embed_dim)
             nn.init.normal_(new_pos_embed_to_add, mean=0, std=embed_dim ** -0.5)
@@ -946,12 +918,12 @@ class TransformerDecoder(FairseqIncrementalDecoder):
     """
 
     def __init__(
-        self,
-        args,
-        dictionary,
-        embed_tokens,
-        no_encoder_attn=False,
-        output_projection=None,
+            self,
+            args,
+            dictionary,
+            embed_tokens,
+            no_encoder_attn=False,
+            output_projection=None,
     ):
         self.args = args
         super().__init__(dictionary)
@@ -1096,7 +1068,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             )
         num_base_layers = getattr(args, "base_layers", 0)
         for i in range(num_base_layers):
-            self.layers.insert(((i+1) * args.decoder_layers) // (num_base_layers + 1), BaseLayer(args))
+            self.layers.insert(((i + 1) * args.decoder_layers) // (num_base_layers + 1), BaseLayer(args))
 
     def build_decoder_layer(self, args, no_encoder_attn=False, drop_path_rate=0.0):
         layer = TransformerDecoderLayer(args, no_encoder_attn, drop_path_rate=drop_path_rate)
@@ -1152,17 +1124,17 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         return abs_pos_bias
 
     def forward(
-        self,
-        prev_output_tokens,
-        code_masks: Optional[torch.Tensor] = None,
-        encoder_out: Optional[Dict[str, List[Tensor]]] = None,
-        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
-        features_only: bool = False,
-        full_context_alignment: bool = False,
-        alignment_layer: Optional[int] = None,
-        alignment_heads: Optional[int] = None,
-        src_lengths: Optional[Any] = None,
-        return_all_hiddens: bool = False,
+            self,
+            prev_output_tokens,
+            code_masks: Optional[torch.Tensor] = None,
+            encoder_out: Optional[Dict[str, List[Tensor]]] = None,
+            incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+            features_only: bool = False,
+            full_context_alignment: bool = False,
+            alignment_layer: Optional[int] = None,
+            alignment_heads: Optional[int] = None,
+            src_lengths: Optional[Any] = None,
+            return_all_hiddens: bool = False,
     ):
         """
         Args:
@@ -1198,14 +1170,14 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         return x, extra
 
     def extract_features(
-        self,
-        prev_output_tokens,
-        code_masks: Optional[torch.Tensor],
-        encoder_out: Optional[Dict[str, List[Tensor]]],
-        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
-        full_context_alignment: bool = False,
-        alignment_layer: Optional[int] = None,
-        alignment_heads: Optional[int] = None,
+            self,
+            prev_output_tokens,
+            code_masks: Optional[torch.Tensor],
+            encoder_out: Optional[Dict[str, List[Tensor]]],
+            incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+            full_context_alignment: bool = False,
+            alignment_layer: Optional[int] = None,
+            alignment_heads: Optional[int] = None,
     ):
         return self.extract_features_scriptable(
             prev_output_tokens,
@@ -1224,14 +1196,14 @@ class TransformerDecoder(FairseqIncrementalDecoder):
     """
 
     def extract_features_scriptable(
-        self,
-        prev_output_tokens,
-        code_masks: Optional[torch.Tensor],
-        encoder_out: Optional[Dict[str, List[Tensor]]],
-        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
-        full_context_alignment: bool = False,
-        alignment_layer: Optional[int] = None,
-        alignment_heads: Optional[int] = None,
+            self,
+            prev_output_tokens,
+            code_masks: Optional[torch.Tensor],
+            encoder_out: Optional[Dict[str, List[Tensor]]],
+            incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+            full_context_alignment: bool = False,
+            alignment_layer: Optional[int] = None,
+            alignment_heads: Optional[int] = None,
     ):
         """
         Similar to *forward* but only return features.
@@ -1261,7 +1233,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         if encoder_out is not None and len(encoder_out["encoder_out"]) > 0:
             enc = encoder_out["encoder_out"][0]
             assert (
-                enc.size()[1] == bs
+                    enc.size()[1] == bs
             ), f"Expected enc.shape == (t, {bs}, c) got {enc.shape}"
         if encoder_out is not None and len(encoder_out["encoder_padding_mask"]) > 0:
             padding_mask = encoder_out["encoder_padding_mask"][0]
@@ -1282,7 +1254,8 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         src_pos_embed = encoder_out['position_embeddings'][0]
         cross_abs_pos_bias = self.get_pos_info(prev_output_tokens, tgt_pos_embed, src_pos_embed=src_pos_embed)
         if code_masks is not None and torch.any(code_masks):
-            cross_image_abs_pos_bias = self.get_pos_info(prev_output_tokens, tgt_pos_embed, src_pos_embed=src_pos_embed, use_image=True)
+            cross_image_abs_pos_bias = self.get_pos_info(prev_output_tokens, tgt_pos_embed, src_pos_embed=src_pos_embed,
+                                                         use_image=True)
             cross_abs_pos_bias[code_masks] = cross_image_abs_pos_bias[code_masks]
         cross_abs_pos_bias = cross_abs_pos_bias.reshape(-1, *cross_abs_pos_bias.size()[-2:])
 
@@ -1320,11 +1293,6 @@ class TransformerDecoder(FairseqIncrementalDecoder):
 
         self_attn_padding_mask: Optional[Tensor] = None
 
-        print("prev_output_tokens", prev_output_tokens)
-        print("prev_output_tokens.shape", prev_output_tokens.shape)
-        print("self.padding_idx", self.padding_idx)
-        print(prev_output_tokens.eq(self.padding_idx))
-        print(prev_output_tokens.eq(self.padding_idx).any())
         if self.cross_self_attention or prev_output_tokens.eq(self.padding_idx).any():
             self_attn_padding_mask = prev_output_tokens.eq(self.padding_idx)
 
@@ -1401,9 +1369,9 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         dim = tensor.size(0)
         # self._future_mask.device != tensor.device is not working in TorchScript. This is a workaround.
         if (
-            self._future_mask.size(0) == 0
-            or (not self._future_mask.device == tensor.device)
-            or self._future_mask.size(0) < dim
+                self._future_mask.size(0) == 0
+                or (not self._future_mask.device == tensor.device)
+                or self._future_mask.size(0) < dim
         ):
             self._future_mask = torch.triu(
                 utils.fill_with_neg_inf(torch.zeros([dim, dim])), 1
@@ -1454,8 +1422,10 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             if (prefix + param_name) not in state_dict:
                 state_dict[prefix + param_name] = self.state_dict()[param_name]
 
-        if len(state_dict["decoder.embed_image_positions.weight"]) < len(self.state_dict()["embed_image_positions.weight"]):
-            num_posids_to_add = len(self.state_dict()["embed_image_positions.weight"]) - len(state_dict["decoder.embed_image_positions.weight"])
+        if len(state_dict["decoder.embed_image_positions.weight"]) < len(
+                self.state_dict()["embed_image_positions.weight"]):
+            num_posids_to_add = len(self.state_dict()["embed_image_positions.weight"]) - len(
+                state_dict["decoder.embed_image_positions.weight"])
             embed_dim = state_dict["decoder.embed_image_positions.weight"].size(1)
             new_pos_embed_to_add = torch.zeros(num_posids_to_add, embed_dim)
             nn.init.normal_(new_pos_embed_to_add, mean=0, std=embed_dim ** -0.5)
