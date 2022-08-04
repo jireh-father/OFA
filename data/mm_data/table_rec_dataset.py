@@ -81,23 +81,25 @@ def collate(samples, pad_idx, eos_idx):
 
 class TableRecDataset(OFADataset):
     def __init__(
-        self,
-        split,
-        dataset,
-        bpe,
-        src_dict,
-        tgt_dict=None,
-        max_src_length=128,
-        max_tgt_length=1000,
-        patch_image_size=224,
-        imagenet_default_mean_and_std=False,
-        remove_close_tag=False
+            self,
+            split,
+            dataset,
+            bpe,
+            src_dict,
+            tgt_dict=None,
+            max_src_length=128,
+            max_tgt_length=1000,
+            patch_image_size=224,
+            imagenet_default_mean_and_std=False,
+            remove_close_tag=False,
+            use_bpe=False
     ):
         super().__init__(split, dataset, bpe, src_dict, tgt_dict)
         self.max_src_length = max_src_length
         self.max_tgt_length = max_tgt_length
         self.patch_image_size = patch_image_size
         self.remove_close_tag = remove_close_tag
+        self.use_bpe = use_bpe
 
         if imagenet_default_mean_and_std:
             mean = IMAGENET_DEFAULT_MEAN
@@ -123,12 +125,12 @@ class TableRecDataset(OFADataset):
         caption_token_list = preprocess_tag_str(caption, remove_close_tag=self.remove_close_tag)
         print(caption_token_list)
         print("tag", len(caption_token_list))
-        print("encoded", len(self.encode_text(" {}".format(' '.join(caption_token_list)), use_bpe=False)))
-        print("<td>", self.encode_text(" <td>", use_bpe=False))
+        print("encoded", len(self.encode_text(" {}".format(' '.join(caption_token_list)), use_bpe=self.use_bpe)))
+        print("<td>", self.encode_text(" <td>", use_bpe=self.use_bpe))
         tgt_caption = ' '.join(caption_token_list[:self.max_tgt_length])
 
-        src_item = self.encode_text(" what is the structure and content of the table?", use_bpe=False)
-        tgt_item = self.encode_text(" {}".format(tgt_caption), use_bpe=False)
+        src_item = self.encode_text(" what is the structure and content of the table?", use_bpe=self.use_bpe)
+        tgt_item = self.encode_text(" {}".format(tgt_caption), use_bpe=self.use_bpe)
 
         src_item = torch.cat([self.bos_item, src_item, self.eos_item])
         target_item = torch.cat([tgt_item, self.eos_item])

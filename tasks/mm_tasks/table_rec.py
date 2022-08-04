@@ -50,6 +50,9 @@ class TableRecConfig(OFAConfig):
     remove_close_tag: bool = field(
         default=True, metadata={"help": "whether to remove close tags."}
     )
+    use_bpe: bool = field(
+        default=True, metadata={"help": "whether to use bpe."}
+    )
 
 
 @register_task("table_rec", dataclass=TableRecConfig)
@@ -120,6 +123,7 @@ class TableRecTask(OFATask):
             patch_image_size=self.cfg.patch_image_size,
             imagenet_default_mean_and_std=self.cfg.imagenet_default_mean_and_std,
             remove_close_tag=self.cfg.remove_close_tag,
+            use_bpe=self.cfg.use_bpe,
         )
 
     def build_model(self, cfg):
@@ -177,7 +181,7 @@ class TableRecTask(OFATask):
                 # reference, but doesn't get split into multiple tokens.
                 unk_string=("UNKNOWNTOKENINREF" if escape_unk else "UNKNOWNTOKENINHYP"),
             )
-            if self.bpe:
+            if self.cfg.use_bpe and self.bpe:
                 s = self.bpe.decode(s)
             return s
 
