@@ -12,8 +12,8 @@ bpe_dir=../../utils/BPE
 user_dir=../../ofa_module
 
 data_dir=/home/ubuntu/dataset/table_ocr/pubtabnet/ofa_dataset
-#data=${data_dir}/ofa_dataset_train_sample.tsv,${data_dir}/ofa_dataset_val.tsv
-data=${data_dir}/ofa_dataset_train_sample.tsv,${data_dir}/ofa_dataset_train_sample.tsv
+data=${data_dir}/ofa_dataset_train_sample.tsv,${data_dir}/ofa_dataset_val.tsv
+#data=${data_dir}/ofa_dataset_train_sample.tsv,${data_dir}/ofa_dataset_train_sample.tsv
 restore_file=../../checkpoints/ofa_base.pt
 selected_cols=0,1,2
 
@@ -32,7 +32,7 @@ decoder_drop_path_rate=0.1
 dropout=0.1
 attention_dropout=0.0
 max_src_length=80
-max_tgt_length=40
+max_tgt_length=160
 num_bins=1000
 patch_image_size=480
 drop_worst_ratio=0.2
