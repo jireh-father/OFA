@@ -160,6 +160,7 @@ class TableRecTask(OFATask):
 
         if self.cfg.eval:
             def compute_teds(meters):
+                print("meters", meters)
                 teds = meters["_teds_score_sum"].sum / meters["_teds_cnt"].sum
                 teds = teds if isinstance(teds, float) else teds.item()
                 return round(teds, 3)
