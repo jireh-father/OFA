@@ -22,7 +22,7 @@ arch=ofa_base
 criterion=adjust_label_smoothed_cross_entropy
 label_smoothing=0.1
 lr=1e-5
-max_epoch=5
+max_epoch=100
 warmup_ratio=0.06
 batch_size=4
 update_freq=4
@@ -37,7 +37,7 @@ num_bins=1000
 patch_image_size=480
 drop_worst_ratio=0.2
 
-for max_epoch in {5,}; do
+for max_epoch in {100,}; do
   echo "max_epoch "${max_epoch}
   for warmup_ratio in {0.06,}; do
     echo "warmup_ratio "${warmup_ratio}
