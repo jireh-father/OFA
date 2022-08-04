@@ -85,10 +85,6 @@ class OFAModel(TransformerModel):
     ):
         if classification_head_name is not None:
             features_only = True
-        logger.info(
-            "start encoder. " + str(self.encoder.__class__)
-        )
-
         encoder_out = self.encoder(
             src_tokens,
             src_lengths=src_lengths,
@@ -99,9 +95,6 @@ class OFAModel(TransformerModel):
             return_all_hiddens=return_all_hiddens,
             sample_patch_num=sample_patch_num
         )
-        logger.info(
-            "start decoder"
-        )
         x, extra = self.decoder(
             prev_output_tokens,
             code_masks=code_masks,
@@ -111,9 +104,6 @@ class OFAModel(TransformerModel):
             alignment_heads=alignment_heads,
             src_lengths=src_lengths,
             return_all_hiddens=return_all_hiddens,
-        )
-        logger.info(
-            "end of decoder"
         )
         pad = self.encoder.padding_idx
         if classification_head_name is not None:

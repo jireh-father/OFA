@@ -746,9 +746,7 @@ class Trainer(object):
         logging_outputs, sample_size, ooms = [], 0, 0
 
         for i, sample in enumerate(samples):  # delayed update loop
-            logger.info("before preparing sampe")
             sample, is_dummy_batch = self._prepare_sample(sample)
-            logger.info("after preparing sampe")
 
             def maybe_no_sync():
                 """
