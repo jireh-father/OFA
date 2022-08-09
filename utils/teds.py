@@ -165,8 +165,11 @@ class TEDS(object):
         if (not pred) or (not true):
             return 0.0
         parser = html.HTMLParser(remove_comments=True, encoding='utf-8')
-        pred = html.fromstring(pred, parser=parser)
-        true = html.fromstring(true, parser=parser)
+        try:
+            pred = html.fromstring(pred, parser=parser)
+            true = html.fromstring(true, parser=parser)
+        except:
+            return 0.0
         n_nodes_pred = len(pred.xpath(".//*"))
         n_nodes_true = len(true.xpath(".//*"))
         n_nodes = max(n_nodes_pred, n_nodes_true)
