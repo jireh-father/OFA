@@ -48,10 +48,13 @@ class TableRecConfig(OFAConfig):
         default=10, metadata={"help": "max numbers of span cells"}
     )
     remove_close_tag: bool = field(
-        default=True, metadata={"help": "whether to remove close tags."}
+        default=False, metadata={"help": "whether to remove close tags."}
     )
     use_bpe: bool = field(
         default=False, metadata={"help": "whether to use bpe."}
+    )
+    remove_content_token: bool = field(
+        default=True, metadata={"help": "whether to remove content tokens."}
     )
 
 
@@ -124,6 +127,7 @@ class TableRecTask(OFATask):
             imagenet_default_mean_and_std=self.cfg.imagenet_default_mean_and_std,
             remove_close_tag=self.cfg.remove_close_tag,
             use_bpe=self.cfg.use_bpe,
+            remove_content_token=self.cfg.remove_content_token
         )
 
     def build_model(self, cfg):
@@ -193,8 +197,8 @@ class TableRecTask(OFATask):
                 utils.strip_pad(sample["target"][i], self.tgt_dict.pad()),
                 escape_unk=True,  # don't count <unk> as matches to the hypo
             )
-            hyp_html = decode_to_html(preprocess_tag_str(decode_tokens, True), True).strip()
-            ref_html = decode_to_html(preprocess_tag_str(ref_decode_tokens, True), True).strip()
+            hyp_html = decode_to_html(preprocess_tag_str(decode_tokens, True), self.cfg.remove_close_tag).strip()
+            ref_html = decode_to_html(preprocess_tag_str(ref_decode_tokens, True), self.cfg.remove_close_tag).strip()
 
             hyps.append(hyp_html)
             refs.append(ref_html)

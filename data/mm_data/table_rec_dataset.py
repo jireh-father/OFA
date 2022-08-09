@@ -92,7 +92,8 @@ class TableRecDataset(OFADataset):
             patch_image_size=224,
             imagenet_default_mean_and_std=False,
             remove_close_tag=False,
-            use_bpe=False
+            use_bpe=False,
+            remove_content_token=False
     ):
         super().__init__(split, dataset, bpe, src_dict, tgt_dict)
         self.max_src_length = max_src_length
@@ -100,6 +101,7 @@ class TableRecDataset(OFADataset):
         self.patch_image_size = patch_image_size
         self.remove_close_tag = remove_close_tag
         self.use_bpe = use_bpe
+        self.remove_content_token = remove_content_token
 
         if imagenet_default_mean_and_std:
             mean = IMAGENET_DEFAULT_MEAN
@@ -122,7 +124,7 @@ class TableRecDataset(OFADataset):
         patch_image = self.patch_resize_transform(image)
         patch_mask = torch.tensor([True])
 
-        caption_token_list = preprocess_tag_str(caption, remove_close_tag=self.remove_close_tag)
+        caption_token_list = preprocess_tag_str(caption, remove_close_tag=self.remove_close_tag, remove_content_token=self.remove_content_token)
         # print(caption_token_list)
         # print("tag", len(caption_token_list))
         # print("encoded", len(self.encode_text(" {}".format(' '.join(caption_token_list)), use_bpe=self.use_bpe)))

@@ -37,7 +37,7 @@ num_bins=1000
 patch_image_size=480
 drop_worst_ratio=0.2
 
-for max_epoch in {100,}; do
+for max_epoch in {200,}; do
   echo "max_epoch "${max_epoch}
   for warmup_ratio in {0.06,}; do
     echo "warmup_ratio "${warmup_ratio}
