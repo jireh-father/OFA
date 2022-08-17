@@ -48,13 +48,13 @@ class TableRecConfig(OFAConfig):
         default=10, metadata={"help": "max numbers of span cells"}
     )
     remove_close_tag: bool = field(
-        default=False, metadata={"help": "whether to remove close tags."}
+        default=True, metadata={"help": "whether to remove close tags."}
     )
     use_bpe: bool = field(
         default=False, metadata={"help": "whether to use bpe."}
     )
     remove_content_token: bool = field(
-        default=True, metadata={"help": "whether to remove content tokens."}
+        default=False, metadata={"help": "whether to remove content tokens."}
     )
 
 
