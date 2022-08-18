@@ -51,7 +51,7 @@ class TableRecConfig(OFAConfig):
         default=True, metadata={"help": "whether to remove close tags."}
     )
     use_bpe: bool = field(
-        default=False, metadata={"help": "whether to use bpe."}
+        default=True, metadata={"help": "whether to use bpe."}
     )
     remove_content_token: bool = field(
         default=False, metadata={"help": "whether to remove content tokens."}
@@ -76,6 +76,16 @@ class TableRecTask(OFATask):
             os.path.join(cfg.bpe_dir, "dict.txt")
         )
 
+        src_dict.add_symbol("<mask>")
+        tgt_dict.add_symbol("<mask>")
+        for i in range(cfg.code_dict_size):
+            src_dict.add_symbol("<code_{}>".format(i))
+            tgt_dict.add_symbol("<code_{}>".format(i))
+        # quantization
+        for i in range(cfg.num_bins):
+            src_dict.add_symbol("<bin_{}>".format(i))
+            tgt_dict.add_symbol("<bin_{}>".format(i))
+
         if not cfg.remove_close_tag:
             src_dict.add_symbol("</tr>")
             src_dict.add_symbol("</td>")
@@ -91,15 +101,8 @@ class TableRecTask(OFATask):
             src_dict.add_symbol('<tdrowspan="{}">'.format(i + 2))
             tgt_dict.add_symbol('<tdcolspan="{}">'.format(i + 2))
             tgt_dict.add_symbol('<tdrowspan="{}">'.format(i + 2))
-        src_dict.add_symbol("<mask>")
-        tgt_dict.add_symbol("<mask>")
-        for i in range(cfg.code_dict_size):
-            src_dict.add_symbol("<code_{}>".format(i))
-            tgt_dict.add_symbol("<code_{}>".format(i))
-        # quantization
-        for i in range(cfg.num_bins):
-            src_dict.add_symbol("<bin_{}>".format(i))
-            tgt_dict.add_symbol("<bin_{}>".format(i))
+
+
 
         logger.info("source dictionary: {} types".format(len(src_dict)))
         logger.info("target dictionary: {} types".format(len(tgt_dict)))
