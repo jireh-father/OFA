@@ -79,7 +79,7 @@ def main(args):
         for i, line in enumerate(open(args.label_path, encoding='utf-8')):
             if i % 10 == 0:
                 print(i)
-            if i >= args.test_cnt:
+            if args.test_cnt and i >= args.test_cnt:
                 break
             item = json.loads(line)
             table_tag, tmp_total_texts, text_set, tmp_max_row_span, tmp_max_col_span = convert_ptn_item_to_simple_html(
