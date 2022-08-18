@@ -120,8 +120,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--label_path', type=str,
                         default="D:\dataset\\table_ocr\pubtabnet\pubtabnet\PubTabNet_2.0.0.jsonl")
-    parser.add_argument('--image_root', type=str,
-                        default="D:\dataset\\table_ocr\pubtabnet\pubtabnet")
     parser.add_argument('--output_dir', type=str, default="D:\dataset\\table_ocr\pubtabnet\pubtabnet\ofa_dataset")
 
     main(parser.parse_args())
