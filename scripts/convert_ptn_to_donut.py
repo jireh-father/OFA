@@ -32,7 +32,7 @@ def convert_ptn_item_to_simple_html(item):
         tag = item['html']['structure']['tokens'][i]
         tag = tag.strip()
         i += 1
-        if tag in ["<thead>", "</thead>", "<tbody>", "</tbody>"]:
+        if tag in ["<thead>", "</thead>", "<tbody>", "</tbody>"] or tag.startswith("</t"):
             continue
         if tag == "<td":
             split_tag = item['html']['structure']['tokens'][i].strip().split('"')
@@ -67,12 +67,8 @@ def main(args):
     total_chars = set()
     total_texts = []
     os.makedirs(args.output_dir, exist_ok=True)
-    train_output = os.path.join(args.output_dir, "ofa_dataset_train.tsv")
-    val_output = os.path.join(args.output_dir, "ofa_dataset_val.tsv")
     chars_output = os.path.join(args.output_dir, "chars.json")
     corpus_output = os.path.join(args.output_dir, "total_corpus.txt")
-    trainf = open(train_output, "w+", encoding='utf-8')
-    valf = open(val_output, "w+", encoding='utf-8')
 
     output_json_train = os.path.join(args.output_dir, "train_metadata.jsonl")
     output_json_val = os.path.join(args.output_dir, "val_metadata.jsonl")
@@ -83,8 +79,11 @@ def main(args):
         for i, line in enumerate(open(args.label_path, encoding='utf-8')):
             if i % 10 == 0:
                 print(i)
+            if i >= args.test_cnt:
+                break
             item = json.loads(line)
-            table_tag, tmp_total_texts, text_set, tmp_max_row_span, tmp_max_col_span = convert_ptn_item_to_simple_html(item)
+            table_tag, tmp_total_texts, text_set, tmp_max_row_span, tmp_max_col_span = convert_ptn_item_to_simple_html(
+                item)
             total_texts.append(" ".join(tmp_total_texts))
             if max_row_span < tmp_max_row_span:
                 max_row_span = tmp_max_row_span
@@ -107,10 +106,10 @@ def main(args):
     total_chars = list(total_chars)
     total_chars.sort()
     json.dump(total_chars, open(chars_output, "w+"))
-    open(corpus_output, "w+", encoding="utf-8").writelines(total_texts)
+    with open(corpus_output, "w+", encoding="utf-8") as corpus_outf:
+        for text in total_texts:
+            corpus_outf.write("{}\n".format(text))
 
-    trainf.close()
-    valf.close()
     print("max_row_span", max_row_span)
     print("max_col_span", max_col_span)
     print("done")
@@ -122,4 +121,6 @@ if __name__ == '__main__':
                         default="D:\dataset\\table_ocr\pubtabnet\pubtabnet\PubTabNet_2.0.0.jsonl")
     parser.add_argument('--output_dir', type=str, default="D:\dataset\\table_ocr\pubtabnet\pubtabnet\ofa_dataset")
 
+    parser.add_argument('--test_cnt', type=int,
+                        default=None)
     main(parser.parse_args())
