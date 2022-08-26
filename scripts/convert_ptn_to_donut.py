@@ -95,7 +95,7 @@ def main(args):
             else:
                 outf = output_val
             gt_parse = {
-                "gt_parse": {"text_sequence": " ".join(table_tag)}
+                "gt_parse": {"text_sequence": args.join_delimiter.join(table_tag)}
             }
             result_line = {
                 "file_name": item['filename'],
@@ -121,6 +121,6 @@ if __name__ == '__main__':
                         default="D:\dataset\\table_ocr\pubtabnet\pubtabnet\PubTabNet_2.0.0.jsonl")
     parser.add_argument('--output_dir', type=str, default="D:\dataset\\table_ocr\pubtabnet\pubtabnet\ofa_dataset")
 
-    parser.add_argument('--test_cnt', type=int,
-                        default=None)
+    parser.add_argument('--test_cnt', type=int, default=None)
+    parser.add_argument('--join_delimiter', type=str, default='')
     main(parser.parse_args())
